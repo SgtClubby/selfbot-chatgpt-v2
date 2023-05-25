@@ -1,0 +1,78 @@
+const { Context } = require("./schema.js");
+const { encode } = require("gpt-3-encoder");
+
+class MongoDB {
+    constructor() {
+        this.Player = Player;
+    }
+
+    static async getContextByGuildId(guildId) {
+        
+        const context = await Context.find({ guildId }, { _id: 0, __v: 0, guildId: 0, messages: { "_id": 0} });
+        
+        if (context.length === 0) {
+            await MongoDB.newContext(guildId);
+            return {context: [], guildId};
+        }
+
+        return {context: context[0].messages, guildId};
+      
+      }
+
+    static async addToContext(guildId, newContext, role) {
+        const context = (await MongoDB.getContextByGuildId(guildId)).context
+        
+        context.push({content: newContext, role: role})
+
+        const updatedContext = await Context.updateOne({guildId}, {messages: context})
+        console.log("Updated context for guild: " + guildId)
+        return updatedContext;
+    }   
+
+    static async newContext(guildId) {
+        const context = {
+            _id: guildId,
+            guildId: guildId,
+            context: []
+        }
+
+        const newContext = new Context(context);
+        console.log("Created new context for guild: " + guildId)
+        return await newContext.save();
+    }
+
+    // clear the convo database
+    static async clearContextByGuildId(guildId) {
+        console.log("Clearing context for guild: " + guildId)
+        const removedContext= await Context.deleteOne({guildId});
+        return removedContext;
+    }
+    
+    static async clearAllContext() {
+        console.log("Clearing all contexts")
+        const removedContext = await Context.deleteMany({});
+        return removedContext;
+    }
+
+    static async trimContextByGuildId(guildId, currentContextLength) {
+        const context = (await MongoDB.getContextByGuildId(guildId)).context
+        const trimmedContext = context.slice(Math.max(context.length - 5, 0))
+        const updatedContext = await Context.updateOne({guildId}, {messages: trimmedContext})
+        console.log("Trimmed context for guild: " + guildId)
+        console.log("Context length was: " + currentContextLength)
+        return updatedContext;
+    }
+
+    static getTotalTokensFromContext(context) {
+        let total = 0;
+        context.forEach(({content}) => {
+            total += encode(content).length;
+        })
+        return total;
+    }
+
+
+
+}
+
+module.exports = MongoDB;
