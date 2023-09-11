@@ -1,4 +1,4 @@
-const { Context } = require("./schema.js");
+const { Context, Persona } = require("./schema.js");
 const { encode } = require("gpt-3-encoder");
 
 class MongoDB {
@@ -8,14 +8,14 @@ class MongoDB {
 
     static async getContextByGuildId(guildId) {
         
-        const context = await Context.find({ guildId }, { _id: 0, __v: 0, guildId: 0, messages: { "_id": 0} });
-        
-        if (context.length === 0) {
+        const context = await Context.findOne({ guildId }, { _id: 0, __v: 0, guildId: 0, messages: { "_id": 0} })
+
+        if (!context) {
             await MongoDB.newContext(guildId);
             return {context: [], guildId};
         }
 
-        return {context: context[0].messages, guildId};
+        return {context: context.messages, guildId};
       
       }
 
@@ -71,8 +71,23 @@ class MongoDB {
         return total;
     }
 
+    static async getPersonaByGuildId(guildId) {
+        const persona = await Persona.find({ guildId }, { _id: 0, __v: 0 })
+        return persona;
+    }
 
+    static async setPersonaByGuildId(guildId, persona) {
+        const personaObj = {
+            guildId,
+            name: "default",
+            persona: "waduhejk",
+            active: false
+        }
 
+        const newPersona = new Persona(personaObj);
+        console.log("Created new persona for guild: " + guildId)
+        return await newPersona.save();
+    }
 }
 
 module.exports = MongoDB;

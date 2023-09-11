@@ -16,9 +16,17 @@ const contextSchema = new Schema({
       }
     ]
 });
-  
+
+const personaSchema = new Schema({
+    _id: String,
+    guildId: String,
+    name: String,
+    persona: String,
+    active: Boolean,
+});
 
 const Context = mongoose.model('context', contextSchema);
+const Persona = mongoose.model('persona', personaSchema);
 
 
-module.exports = { Context };
+module.exports = { Context, Persona };
