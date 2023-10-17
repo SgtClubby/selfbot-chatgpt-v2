@@ -5,6 +5,7 @@ const {
   extractImgID,
 } = require("../utils/utils.js");
 const openai = require("./openai.js");
+
 async function imageCompletion(prompt, message, number) {
   console.log("Image completion called with prompt: " + prompt);
   const imagePrompt = {

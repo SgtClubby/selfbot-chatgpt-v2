@@ -1,5 +1,6 @@
 const fs = require("fs");
 const request = require("request");
+const { getAllUsageAndTokens } = require("../mongo/mongo");
 
 let interval;
 function startTyping(message) {
@@ -7,7 +8,6 @@ function startTyping(message) {
     clearInterval(interval);
     interval = null;
   }
-
   if (!message.channel) return;
   message.channel.sendTyping();
   interval = setInterval(() => {
@@ -21,7 +21,6 @@ function startTypingChannel(channel) {
     clearInterval(chaInterval);
     chaInterval = null;
   }
-
   channel.sendTyping();
   chaInterval = setInterval(() => {
     channel.sendTyping();
@@ -75,7 +74,37 @@ function splitMessage(message) {
   return messageArray;
 }
 
+async function cost(message) {
+  const data = await getAllUsageAndTokens();
+
+  const totalCost =
+    (data.tokens.prompt_tokens / 1000) * 0.03 +
+    (data.tokens.completion_tokens / 1000) * 0.06;
+
+  const mappedUsage = data.usage.map((u) => {
+    // calculate percentage of total messages
+    return `**@${u.username}** (${u.userId}) - ${u.usage} messages (${(
+      (u.usage / data.usage.reduce((a, b) => a + b.usage, 0)) *
+      100
+    ).toFixed(2)}% of total, ${(
+      (u.usage / data.usage.reduce((a, b) => a + b.usage, 0)) *
+      totalCost
+    ).toFixed(2)}$ PT: ${u.tokens.prompt_tokens} CT: ${
+      u.tokens.completion_tokens
+    })`;
+  });
+
+  return `
+        **Total cost**: $${totalCost.toFixed(2)}\n\n**Total users**: ${
+    data.usage.length
+  } users\n**Total messages**: ${data.usage.reduce(
+    (a, b) => a + b.usage,
+    0
+  )}\n\n${mappedUsage.join("\n")}`;
+}
+
 module.exports = {
+  cost,
   startTyping,
   stopTyping,
   startTypingChannel,

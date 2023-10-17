@@ -1,32 +1,42 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const { Schema } = mongoose;
-mongoose.set('strictQuery', false);
+mongoose.set("strictQuery", false);
 
-mongoose.connect(process.env.MONGO_URI)
-  .then(()=> console.log('MongoDB connected successfully.'))
-  .catch(e=>console.log(e));
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB connected successfully."))
+  .catch((e) => console.log(e));
 
 const contextSchema = new Schema({
-    _id: String,
-    guildId: String,
-    messages: [
-      {
-        content: String,
-        role: String,
-      }
-    ]
+  _id: String,
+  guildId: String,
+  messages: [
+    {
+      content: String,
+      role: String,
+    },
+  ],
 });
 
-const personaSchema = new Schema({
-    _id: String,
-    guildId: String,
-    name: String,
-    persona: String,
-    active: Boolean,
+const usageSchema = new Schema({
+  _id: String,
+  userId: String,
+  username: String,
+  tokens: {
+    prompt_tokens: { type: Number, default: 0 },
+    completion_tokens: { type: Number, default: 0 },
+  },
+  usage: Number,
 });
 
-const Context = mongoose.model('context', contextSchema);
-const Persona = mongoose.model('persona', personaSchema);
+const Tokens = new Schema({
+  _id: String,
+  prompt_tokens: Number,
+  completion_tokens: Number,
+});
 
+const Context = mongoose.model("context", contextSchema);
+const Usage = mongoose.model("usage", usageSchema);
+const Token = mongoose.model("token", Tokens);
 
-module.exports = { Context, Persona };
+module.exports = { Context, Usage, Token };
