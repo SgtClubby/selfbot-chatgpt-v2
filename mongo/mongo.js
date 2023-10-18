@@ -117,8 +117,6 @@ class MongoDB {
 
   static async updateUsage(userId, ct, pt) {
     const existing = await Usage.findOne({ userId }, { _id: 0, __v: 0 });
-    console.log(existing.tokens);
-    console.log(ct, pt);
     await Usage.updateOne({ userId }, { $inc: { usage: 1 } });
     await Usage.updateOne(
       {
@@ -174,6 +172,23 @@ class MongoDB {
     const usage = await Usage.find({}, { _id: 0, __v: 0 });
     const tokens = await Token.find({ _id: "tokens" }, { _id: 0, __v: 0 });
     return { usage, tokens: tokens[0] };
+  }
+
+  static async clearAllTokens() {
+    console.log("Clearing all tokens");
+    const removedTokens = await Token.deleteMany({});
+    return removedTokens;
+  }
+
+  static async clearAllUsageAndTokens() {
+    console.log("Clearing all usage and tokens");
+    const removedUsage = await Usage.deleteMany({});
+    // dont delete the document within the tokens collection, set them to zero
+    const removedTokens = await Token.updateOne(
+      { _id: "tokens" },
+      { $set: { completion_tokens: 0, prompt_tokens: 0 } }
+    );
+    return { removedUsage, removedTokens };
   }
 }
 

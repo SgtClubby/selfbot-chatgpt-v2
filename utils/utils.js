@@ -74,8 +74,11 @@ function splitMessage(message) {
   return messageArray;
 }
 
-async function cost(message) {
+async function cost() {
   const data = await getAllUsageAndTokens();
+  console.log(data);
+  if (!data.usage) return "No usage data found";
+  if (!data.tokens) return "No token data found";
 
   const totalCost =
     (data.tokens.prompt_tokens / 1000) * 0.03 +

@@ -4,6 +4,7 @@ const {
   getContextByGuildId,
   getAllUsage,
   getAllUsageAndTokens,
+  clearAllUsageAndTokens,
 } = require("../mongo/mongo.js");
 const { parseMessage, parseArgsImage } = require("../utils/parsers.js");
 const imageCompletion = require("../openai/DALLE.js");
@@ -60,10 +61,34 @@ const handleMessage = async (message) => {
       if (number > 5)
         return message.channel.send("You can only generate 5 images.");
       return imageCompletion(prompt, message, number);
-    case "fullcontext":
-      fullcontext = !fullcontext;
+    case "usage-clear":
+      const response = await awaitReply(
+        message,
+        "Are you sure you want to clear all usage data? Y / n"
+      );
+      if (response.toLowerCase() != "y")
+        return message.channel.send("Cancelled.");
+
+      await clearAllUsageAndTokens();
+      return message.channel.send("Cleared usage data!");
     default:
       return chatCompletion(args.join(" "), guildId, message, model);
   }
 };
 module.exports = { handleMessage };
+
+async function awaitReply(msg, question, limit = 60000) {
+  const filter = (m) => m.author.id === msg.author.id;
+  await msg.channel.send(question);
+  try {
+    const collected = await msg.channel.awaitMessages({
+      filter,
+      max: 1,
+      time: limit,
+      errors: ["time"],
+    });
+    return collected.first().content;
+  } catch (e) {
+    return false;
+  }
+}
